@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch & nodemon dist/server.js",
+    "dev": "ts-node-dev --respawn --transpile-only --exit-child src/server.ts",
     "start": "node dist/server.js"
   },
   "keywords": [],
@@ -20,6 +20,7 @@
   "devDependencies": {
     "@types/node": "^24.5.2",
     "nodemon": "^3.1.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   }
 }
