@@ -1,5 +1,7 @@
 import fastifyCors from '@fastify/cors';
-import fastifyEnv, {FastifyEnvOptions} from '@fastify/env';
+import fastifyEnv from '@fastify/env';
+import fastifyMongodb from '@fastify/mongodb';
+import fastifySensible from '@fastify/sensible';
 import Fastify, {FastifyInstance, RouteShorthandOptions} from 'fastify'
 import helloRoute from './hello.js';
 
@@ -12,23 +14,34 @@ const envSchema = {
     properties: {
         NODE_ENV: {type: 'string', default: 'development'},
         PORT: {type: 'number', default: 3000},
+        MONGODB_URI: {type: 'string'},
     },
-    required: ['NODE_ENV', 'PORT'],
+    required: ['NODE_ENV', 'PORT', 'MONGODB_URI'],
     additionalProperties: false,
 };
 
-const options: FastifyEnvOptions = {
+// Register the plugin
+server.register(fastifyEnv, {
+    dotenv: true,
     confKey: 'config',
     schema: envSchema,
     data: process.env
-};
+});
 
-// Register the plugin
-server.register(fastifyEnv, options);
 server.register(fastifyCors, {
     origin: true,
     methods: ['GET'],
 });
+
+server.register(fastifySensible);
+
+server.after(() => {
+    server.register(fastifyMongodb, {
+        forceClose: true,
+        url: (server as any).config.MONGODB_URL,
+    })
+});
+
 server.register(helloRoute);
 
 const opts: RouteShorthandOptions = {
@@ -61,7 +74,4 @@ const start = async () => {
     }
 }
 
-start().catch((err) => {
-    console.error(err)
-    process.exit(1)
-})
+start();
