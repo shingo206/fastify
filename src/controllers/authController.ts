@@ -99,6 +99,13 @@ export class AuthController {
         }
     }
 
+    static async logout(request: any, reply: FastifyReply) {
+        reply.status(200).send({
+            success: true,
+            message: 'User logged out'
+        });
+    }
+
     static async getProfile(request: GetProfileInferredRequest, reply: FastifyReply) {
         try {
             const {id} = request.params;

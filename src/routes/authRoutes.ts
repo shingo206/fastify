@@ -1,7 +1,15 @@
 import {FastifyInstance, FastifyPluginOptions, FastifySchema} from 'fastify';
 import {AuthController} from '../controllers/authController';
 // Import only the request interfaces that are needed for routing
-import {GetProfileRequest, GetUsersRequest, LoginRequest, RegisterRequest, UpdateUserRequest} from '../types/request';
+import {
+    ForgetPasswordRequest,
+    GetProfileRequest,
+    GetUsersRequest,
+    LoginRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+    UpdateUserRequest
+} from '../types/request';
 // Import the response types to use as generic arguments for the response schema
 import {
     BaseResponse,
@@ -146,6 +154,70 @@ const authRoutes = async (fastify: FastifyInstance, options: FastifyPluginOption
             }
         } as DocumentationSchema,
     }, AuthController.login);
+    // --- Logout User ---
+    fastify.post('/logout', AuthController.logout);
+    // --- Forget Password ---
+    fastify.post<{
+        Body: ForgetPasswordRequest['body'],
+        Reply: UserResponse | ErrorResponse
+    }>('/forget-password', {
+        schema: {
+            description: 'Forget user password',
+            tags: ['Authentication'],
+            body: {
+                type: 'object',
+                required: ['email'],
+                properties: {
+                    email: {
+                        type: 'string',
+                        description: 'User email address',
+                        example: 'TomSmith@example.com',
+                        format: 'email',
+                        required: true,
+                    },
+                }
+            },
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        resetUrl: {
+                            type: 'string',
+                            description: 'Reset URL',
+                            required: true
+                        },
+                    }
+                },
+                ...errorResponseSchema(404), // Not Found
+            }
+        } as DocumentationSchema,
+    }, AuthController.forgotPassword);
+    // --- Reset Password ---
+    fastify.post<{
+        Params: ResetPasswordRequest['params'],
+        Body: ResetPasswordRequest['body'],
+        Reply: UserResponse | ErrorResponse
+    }>('/reset-password', {
+        schema: {
+            description: 'Reset user password',
+            tags: ['Authentication'],
+            body: {
+                type: 'object',
+                required: ['newPassword'],
+                properties: {
+                    newPassword: {
+                        type: 'string',
+                        description: 'New password',
+                        required: true,
+                    },
+                }
+            },
+            response: {
+                ...successUserResponseSchema('Reset password successfully', 200),
+                ...errorResponseSchema(404), // Not Found
+            }
+        } as DocumentationSchema,
+    }, AuthController.resetPassword);
     // --- Get User Profile by ID ---
     fastify.get<{
         Params: GetProfileRequest['params'],
