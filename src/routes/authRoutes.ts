@@ -197,7 +197,7 @@ const authRoutes = async (fastify: FastifyInstance, options: FastifyPluginOption
         Params: ResetPasswordRequest['params'],
         Body: ResetPasswordRequest['body'],
         Reply: UserResponse | ErrorResponse
-    }>('/reset-password', {
+    }>('/reset-password/:resetPasswordToken', {
         schema: {
             description: 'Reset user password',
             tags: ['Authentication'],
