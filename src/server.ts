@@ -25,7 +25,6 @@ server.register(fastifyEnv, {
     dotenv: true,
     confKey: 'config',
     schema: envSchema,
-    data: process.env
 });
 
 server.register(fastifyCors, {
@@ -38,7 +37,7 @@ server.register(fastifySensible);
 server.after(() => {
     server.register(fastifyMongodb, {
         forceClose: true,
-        url: (server as any).config.MONGODB_URL,
+        url: (server as any).config.MONGODB_URI,
     })
 });
 

@@ -1,8 +1,6 @@
 import {FastifyInstance, FastifyPluginOptions} from 'fastify';
 
 const helloRouter = async (fastify: FastifyInstance, options: FastifyPluginOptions) => {
-    const state = (fastify as any).mongo.connection.readyState;
-
     fastify.get('/hello', async (request, reply) => {
         reply.send({message: 'Hello, world!'});
     });
@@ -13,29 +11,27 @@ const helloRouter = async (fastify: FastifyInstance, options: FastifyPluginOptio
 
     fastify.get('/test-db', async (request, reply) => {
         try {
-            let status: string;
-            switch (state) {
-                case 0:
-                    status = "Disconnected";
-                    break;
-                case 1:
-                    status = "Connected";
-                    break;
-                case 2:
-                    status = "Connecting";
-                    break;
-                case 3:
-                    status = "Disconnecting";
-                    break;
-                default:
-                    status = "Unknown";
+            // MongoDBプラグインが利用可能かチェック
+            if (!(fastify as any).mongo) {
+                throw fastify.httpErrors.serviceUnavailable('MongoDB connection not available' );
             }
-            reply.send({database: status});
+
+            // データベース接続状態をチェック
+            const mongoClient = (fastify as any).mongo.client;
+            const isConnected = mongoClient && mongoClient.topology && mongoClient.topology.isConnected();
+
+            let status: string;
+            if (isConnected) {
+                status = "Connected";
+            } else {
+                status = "Disconnected";
+            }
+
+            return { database: status };
 
         } catch (error) {
             fastify.log.error(error);
-            reply.status(500).send({error: 'Something went wrong with connection!'});
-            process.exit(1);
+            throw fastify.httpErrors.internalServerError('Database connection check failed' );
         }
     });
 };
